@@ -1,0 +1,13 @@
+[package]
+name = "CrabX"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+color-eyre = "0.6.3"
+futures = "0.3.31"
+irc = "1.0.0"
+ratatui = "0.29.0"
+tokio = {version = "1.43.0", features = ["rt-multi-thread", "macros"]}
+tokio-macros = "2.5.0"
+
