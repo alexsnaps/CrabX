@@ -7,7 +7,7 @@ use ratatui::{
   layout::{Constraint, Layout, Position},
   style::{Color, Modifier, Style, Stylize},
   text::{Line, Text},
-  widgets::{Block, List, ListDirection, ListItem, Paragraph},
+  widgets::{Block, List, ListItem, ListState, Paragraph},
   DefaultTerminal, Frame,
 };
 use tokio::sync::mpsc;
@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
     let config = Config {
       nickname: Some("alxs".to_owned()),
       server: Some("chat.freenode.net".to_owned()),
-      channels: vec!["#crabx".to_owned()],
+      channels: vec![],
       ..Default::default()
     };
 
@@ -133,7 +133,7 @@ impl App {
   }
 
   fn submit_message(&mut self) {
-    self.messages.insert(0, self.input.clone());
+    self.messages.push(self.input.clone());
     self.input.clear();
     self.reset_cursor();
   }
@@ -141,7 +141,7 @@ impl App {
   fn run(mut self, mut terminal: DefaultTerminal) -> Result<()> {
     loop {
       if let Ok(message) = self.receiver.try_recv() {
-        self.messages.insert(0, message);
+        self.messages.push(message);
       }
       terminal.draw(|frame| self.draw(frame))?;
 
@@ -230,13 +230,13 @@ impl App {
       .messages
       .iter()
       .map(|m| {
-        let content = Line::from(m.as_str());
+        let content = Text::from(m.as_str());
         ListItem::new(content)
       })
       .collect();
-    let messages = List::new(messages)
-      .direction(ListDirection::BottomToTop)
-      .block(Block::new());
-    frame.render_widget(messages, messages_area);
+    let messages = List::new(messages).block(Block::new());
+    let mut state = ListState::default();
+    state.select_last();
+    frame.render_stateful_widget(messages, messages_area, &mut state);
   }
 }
