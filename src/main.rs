@@ -1,6 +1,7 @@
 use futures::prelude::*;
 use irc::client::prelude::*;
 
+use clap::{arg, command, value_parser};
 use color_eyre::Result;
 use ratatui::{
   crossterm::event::{self, Event, KeyCode, KeyEventKind},
@@ -10,16 +11,33 @@ use ratatui::{
   widgets::{Block, List, ListItem, ListState, Paragraph},
   DefaultTerminal, Frame,
 };
+use std::path::PathBuf;
 use tokio::sync::mpsc;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+  let matches = command!() // requires `cargo` feature
+    .arg(arg!([nick] "Optional nickname to use"))
+    .arg(arg!([server] "Optional server to connect to"))
+    .arg(
+      arg!(
+        -c --config <FILE> "Sets a custom config file"
+      )
+      // We don't have syntax yet for optional options, so manually calling `required`
+      .required(false)
+      .value_parser(value_parser!(PathBuf)),
+    )
+    .get_matches();
+
+  let nickname = matches.get_one::<String>("nick").cloned();
+  let server = matches.get_one::<String>("server").cloned();
+
   let (tx, rx) = mpsc::channel(100);
 
   tokio::spawn(async move {
     let config = Config {
-      nickname: Some("alxs".to_owned()),
-      server: Some("chat.freenode.net".to_owned()),
+      nickname,
+      server,
       channels: vec![],
       ..Default::default()
     };
